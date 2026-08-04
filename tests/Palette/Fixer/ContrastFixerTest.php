@@ -105,6 +105,86 @@ final class ContrastFixerTest extends TestCase
         $this->assertEqualsWithDelta($originalChroma, $fixedChroma, 0.01);
     }
 
+    public function testFixDefaultBehaviorUnchangedWithBothPreserved(): void
+    {
+        // Golden master captured from the released behavior before this
+        // fixer started honoring preserve_hue/preserve_chroma: false.
+        $palette = ColorPalette::parse(['oklch(0.70 0.25 0)']);
+        $black = Color::parse('#000000');
+
+        $fixed = $this->fixer->fix($palette, [
+            'min_contrast' => 7.0,
+            'background_color' => $black,
+            'adjust_mode' => 'darken',
+            'max_iterations' => 2,
+        ]);
+
+        $this->assertSame('#e9007a', $fixed->get(0)->toHex());
+    }
+
+    public function testFixRelaxesChromaWhenPreserveChromaIsFalse(): void
+    {
+        $palette = ColorPalette::parse(['oklch(0.70 0.25 0)']);
+        $black = Color::parse('#000000');
+        $options = [
+            'min_contrast' => 7.0,
+            'background_color' => $black,
+            'adjust_mode' => 'darken',
+            'max_iterations' => 2,
+        ];
+
+        $preserved = $this->fixer->fix($palette, $options + ['preserve_chroma' => true]);
+        $relaxed = $this->fixer->fix($palette, $options + ['preserve_chroma' => false]);
+
+        // The fixed chroma search cannot reach 7:1 within 2 iterations.
+        $this->assertLessThan(7.0, Color::contrast($preserved->get(0), $black));
+
+        // Relaxing chroma reaches it, by falling back to grayscale.
+        $this->assertGreaterThanOrEqual(7.0, Color::contrast($relaxed->get(0), $black));
+        $this->assertEqualsWithDelta(0.0, $relaxed->get(0)->to('oklch')->c, 1e-6);
+    }
+
+    public function testFixRelaxesHueWhenPreserveHueIsFalse(): void
+    {
+        $palette = ColorPalette::parse(['oklch(0.70 0.25 0)']);
+        $black = Color::parse('#000000');
+        $options = [
+            'min_contrast' => 7.0,
+            'background_color' => $black,
+            'adjust_mode' => 'darken',
+            'max_iterations' => 2,
+        ];
+
+        $preserved = $this->fixer->fix($palette, $options + ['preserve_hue' => true]);
+        $relaxed = $this->fixer->fix($palette, $options + ['preserve_hue' => false]);
+
+        $this->assertLessThan(7.0, Color::contrast($preserved->get(0), $black));
+        $this->assertGreaterThanOrEqual(7.0, Color::contrast($relaxed->get(0), $black));
+
+        $relaxedOklch = $relaxed->get(0)->to('oklch');
+        // Nearest-first search picks the smallest hue offset that reaches
+        // target; chroma stays untouched since preserve_chroma was not set.
+        $this->assertEqualsWithDelta(30.0, $relaxedOklch->h, 0.5);
+        $this->assertEqualsWithDelta(0.25, $relaxedOklch->c, 1e-6);
+    }
+
+    public function testFixRelaxesBothChromaAndHueTogether(): void
+    {
+        $palette = ColorPalette::parse(['oklch(0.70 0.25 0)']);
+        $black = Color::parse('#000000');
+
+        $relaxed = $this->fixer->fix($palette, [
+            'min_contrast' => 7.0,
+            'background_color' => $black,
+            'adjust_mode' => 'darken',
+            'max_iterations' => 2,
+            'preserve_hue' => false,
+            'preserve_chroma' => false,
+        ]);
+
+        $this->assertGreaterThanOrEqual(7.0, Color::contrast($relaxed->get(0), $black));
+    }
+
     public function testFixWithDarkBackground(): void
     {
         // Light text on dark background
