@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Unreleased
+
+### Added
+
+* Added deterministic perceptual color naming with a unique 360-word vocabulary
+
 ## [1.1.0](https://github.com/phpcolor/phpcolor/releases/tag/v1.1.0) - 2026-08-12
 
 ### Added

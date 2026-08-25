@@ -131,6 +131,22 @@ $color->getChannels();          // ['r' => 0.23, 'g' => 0.51, 'b' => 0.96]
 
 ## Inspect
 
+### Name
+
+Assign any color one of 360 deterministic, perceptual one-word names. This is
+generative naming, independent from the CSS/SVG/X11 named-color catalogs.
+
+```php
+use PhpColor\Color\Name\ColorNamer;
+
+ColorNamer::name('#ff0000');         // 'Fever'
+ColorNamer::name('#0000ff');         // 'Sapphire'
+ColorNamer::name(Color::red());      // 'Fever'
+ColorNamer::getTotalPossibleNames(); // 360
+```
+
+-> [Color naming docs](docs/reference/color-naming.md)
+
 Color objects expose read methods for common attributes regardless of the
 underlying space. All values are normalized to a consistent scale.
 

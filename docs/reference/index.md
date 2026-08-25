@@ -7,6 +7,7 @@ Comprehensive reference for PHPColor features and color theory concepts.
 - [Contrast & WCAG](contrast.md): WCAG 2.x ratios, APCA, and accessibility thresholds.
 - [Color Distance](distance.md): Delta-E CIEDE2000 and perceptual difference metrics.
 - [CSS Colors & Parsing](css-colors.md): Supported CSS functions and named colors.
+- [Color Naming](color-naming.md): Generate one of 360 perceptual one-word color names.
 
 ## Color Attributes
 
